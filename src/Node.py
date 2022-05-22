@@ -73,6 +73,3 @@ class Node:
                 sys.stdout.write(message)
                 sys.stdout.flush()
                 self.__multicast(message, incoming_message_connection)
-
-
-#1. process execution parameters...
