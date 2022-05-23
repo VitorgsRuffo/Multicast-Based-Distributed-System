@@ -20,7 +20,7 @@ class MainNode:
         #3.1.1 return nodes list...
         # Sending list as a string
         data = str(self.nodes_list)
-        data = data.encode()
+        data = data.encode('utf-8')
         conn.send(data)
 
 

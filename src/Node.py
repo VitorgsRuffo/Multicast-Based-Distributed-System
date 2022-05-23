@@ -51,16 +51,18 @@ class Node:
         main_node_socket.send('Connected!'.encode())
 
     def get_node_with_minimum_ping(main_nodes_list):
-        addr_with_lower_latency = NULL
+        addr_with_lowest_latency = NULL
+        lowest_latency = NULL
         for addr_node in main_nodes_list:
             response = os.system("ping -c 1 " + addr_node)
-            if lower_latency == NULL:
-                lower_latency = response
+            if lowest_latency == NULL:
+                lowest_latency = response
             else:
-                if response < lower_latency:
-                    lower_latency = response
+                if response < lowest_latency:
+                    lowest_latency = response
+                    addr_with_lowest_latency = addr_node #faltou essa linha...
 
-        return addr_with_lower_latency
+        return addr_with_lowest_latency
 
     # (main thread): sending message to connections...
     def start(self):
