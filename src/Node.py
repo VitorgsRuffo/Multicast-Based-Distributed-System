@@ -42,10 +42,10 @@ class Node:
 
             #. try{ self.first_connection_sockets.connect(best_connection)} except{exit(1)}
             try:
-                #print(best_connection)
+                print(best_connection)
                 self.first_connection_socket.connect(best_connection)
                 #. connections_list.add(first_connection_socket)...
-                self.connections.add(self.first_connection_socket)
+                self.connections.append(self.first_connection_socket)
             except:
                 main_node_socket.send('-1'.encode())
                 print("Failed to connect.")
@@ -58,18 +58,17 @@ class Node:
     def get_node_with_minimum_ping(self, main_nodes_list):
         addr_with_lowest_latency = None
         lowest_latency = None
-
-        #print(main_nodes_list)
         
         for addr_node in main_nodes_list:
             # getting ping latency
             response = str(subprocess.check_output(['ping', '-c', '1', addr_node[0]]))
 
             latency = re.search(r'(\d+\.\d+/){3}\d+\.\d+', response).group(0)
-            latency = latency.split('/')[0]
+            latency = float(latency.split('/')[0])
 
             if lowest_latency == None:
                 lowest_latency = latency
+                addr_with_lowest_latency = addr_node
             else:
                 if latency < lowest_latency:
                     lowest_latency = latency
@@ -89,7 +88,7 @@ class Node:
             _, _, _ = select.select([sys.stdin],[],[])
             message = sys.stdin.readline()
             message = f"<{self.self_address[0]}:{self.self_address[1]}> {message}"
-            self.__multicast(message, None)
+            self.__multicast(message.encode(), None)
             sys.stdout.write("<This node>")
             sys.stdout.write(message)
             sys.stdout.flush()
@@ -122,6 +121,6 @@ class Node:
             incoming_message_connections, _, _= select.select(connections, [], [], 0.5) 
             for incoming_message_connection in incoming_message_connections:
                 message = incoming_message_connection.recv(1024)
-                sys.stdout.write(message)
+                sys.stdout.write(message.decode())
                 sys.stdout.flush()
                 self.__multicast(message, incoming_message_connection)

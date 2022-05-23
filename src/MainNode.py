@@ -28,12 +28,13 @@ class MainNode:
         # True: add new node to nodes list using a Lock...
         original_port = conn.recv(2048)
         original_port = int(original_port.decode())
+        original_addr = (addr[0], original_port)
 
-        if(original_port < 0):    
-            print("Node " + addr + " failed to connect to the system.")
+        if(original_port < 0):  
+            print("Node " + original_addr + " failed to connect to the system.")
         else:
             self.lock.acquire()
-            self.nodes_list.append(addr)
+            self.nodes_list.append(original_addr)
             self.lock.release()
 
         # close connection...
