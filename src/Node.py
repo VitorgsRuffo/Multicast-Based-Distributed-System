@@ -8,7 +8,6 @@ import threading
 import os
 
 class Node:
-
     def __init__(self, main_node_address, self_address):
         #. instantiate two sockets and connections list...
         self.self_address = self_address
@@ -42,13 +41,14 @@ class Node:
             try:
                 self.first_connection_socket.connect(best_connection)
                 #. connections_list.add(first_connection_socket)...
-                self.connections(best_connection)
+                self.connections.add(self.first_connection_socket)
             except:
-                print("Failed to connect on the best connection")
+                print("Failed to connect.")
                 exit(1)
         
         #. send connection confirmation to main_node...
         main_node_socket.send('Connected!'.encode())
+        main_node_socket.close()
 
     def get_node_with_minimum_ping(main_nodes_list):
         addr_with_lowest_latency = NULL
