@@ -6,6 +6,8 @@ import sys
 from _thread import *
 import threading 
 import os
+import re
+import subprocess
 
 class Node:
     def __init__(self, main_node_address, self_address):
@@ -53,14 +55,19 @@ class Node:
     def get_node_with_minimum_ping(main_nodes_list):
         addr_with_lowest_latency = NULL
         lowest_latency = NULL
+        
         for addr_node in main_nodes_list:
-            response = os.system("ping -c 1 " + addr_node)
+            # getting ping latency
+            response = str(subprocess.check_output(['ping', '-c', '1', addr_node]))
+            latency = re.search(r'(\d+\.\d+/){3}\d+\.\d+', response).group(0)
+            latency = latency.split('/')[0]
+
             if lowest_latency == NULL:
-                lowest_latency = response
+                lowest_latency = latency
             else:
-                if response < lowest_latency:
-                    lowest_latency = response
-                    addr_with_lowest_latency = addr_node #faltou essa linha...
+                if latency < lowest_latency:
+                    lowest_latency = latency
+                    addr_with_lowest_latency = addr_node
 
         return addr_with_lowest_latency
 
