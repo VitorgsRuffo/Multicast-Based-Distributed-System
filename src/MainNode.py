@@ -1,7 +1,7 @@
 import sys
 import socket
+from _thread import *
 import threading
-import pickle
 
 class MainNode:
     # 2. instantiate socket and nodes list...
@@ -10,7 +10,6 @@ class MainNode:
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((ip, port))
         self.socket.listen()
-        self.socket.settimeout(2)
         self.nodes_list = []
         self.lock = threading.Lock()
 
@@ -25,16 +24,17 @@ class MainNode:
 
 
         #3.1.2. wait for confirmation of connection...
-        try:
-            # True: add new node to nodes list using a Lock...
-            conn.recv(2048)
+        
+        # True: add new node to nodes list using a Lock...
+        original_port = conn.recv(2048)
+        original_port = int(original_port.decode())
+
+        if(original_port < 0):    
+            print("Node " + addr + " failed to connect to the system.")
+        else:
             self.lock.acquire()
             self.nodes_list.append(addr)
             self.lock.release()
-
-        except:
-            print("Node " + addr + " failed to connect to the system.")
-
 
         # close connection...
         conn.close()
@@ -44,5 +44,4 @@ class MainNode:
     def execute(self):
         while True:
             conn, addr = self.socket.accept()
-            new_thread = threading.Thread(self.__node_thread,(conn, addr))
-            new_thread.start()
+            start_new_thread(self.__node_thread,(conn, addr))

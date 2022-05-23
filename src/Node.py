@@ -1,4 +1,3 @@
-from asyncio.windows_events import NULL
 from copyreg import pickle
 import socket
 import select
@@ -15,6 +14,7 @@ class Node:
         self.self_address = self_address
         self.lock = threading.Lock()
         self.first_connection_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connection_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connection_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.connection_socket.bind(self_address)
         self.connection_socket.listen(100) 
@@ -35,34 +35,40 @@ class Node:
             #. best_connection = get_node_with_minimum_ping(nodes_list)...
             best_connection = self.get_node_with_minimum_ping(main_nodes_list)
             
-            #. if best_connection == null: exit(1)
-            if best_connection == NULL:
+            #. if best_connection == None: exit(1)
+            if best_connection == None:
+                main_node_socket.send('-1'.encode())
                 exit(1)
 
             #. try{ self.first_connection_sockets.connect(best_connection)} except{exit(1)}
             try:
+                #print(best_connection)
                 self.first_connection_socket.connect(best_connection)
                 #. connections_list.add(first_connection_socket)...
                 self.connections.add(self.first_connection_socket)
             except:
+                main_node_socket.send('-1'.encode())
                 print("Failed to connect.")
                 exit(1)
         
         #. send connection confirmation to main_node...
-        main_node_socket.send('Connected!'.encode())
+        main_node_socket.send(f'{self_address[1]}'.encode())
         main_node_socket.close()
 
-    def get_node_with_minimum_ping(main_nodes_list):
-        addr_with_lowest_latency = NULL
-        lowest_latency = NULL
+    def get_node_with_minimum_ping(self, main_nodes_list):
+        addr_with_lowest_latency = None
+        lowest_latency = None
+
+        #print(main_nodes_list)
         
         for addr_node in main_nodes_list:
             # getting ping latency
-            response = str(subprocess.check_output(['ping', '-c', '1', addr_node]))
+            response = str(subprocess.check_output(['ping', '-c', '1', addr_node[0]]))
+
             latency = re.search(r'(\d+\.\d+/){3}\d+\.\d+', response).group(0)
             latency = latency.split('/')[0]
 
-            if lowest_latency == NULL:
+            if lowest_latency == None:
                 lowest_latency = latency
             else:
                 if latency < lowest_latency:

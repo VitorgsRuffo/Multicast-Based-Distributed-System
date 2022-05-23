@@ -19,10 +19,10 @@ if argvlen > 5:
     this_port = sys.argv[5] 
 
 #executing the system...
-if mode == "main":
+if mode == "-mode=main":
     main_node = MainNode(main_ip, int(main_port))
     main_node.execute()
-elif mode == "normal":
+elif mode == "-mode=normal":
     node = Node((main_ip, int(main_port)), (this_ip, int(this_port)))
     node.start()
 else:
