@@ -1,6 +1,7 @@
 import sys
 import socket
-import threading 
+import threading
+import pickle
 
 class MainNode:
     # 2. instantiate socket and nodes list...
@@ -13,12 +14,15 @@ class MainNode:
         self.nodes_list = []
         self.lock = threading.Lock()
 
-
     #3.1. open new thread for processing request...
     def __node_thread(self, conn, addr):
         
         #3.1.1 return nodes list...
-        #...
+        # Sending list as a string
+        data = str(self.nodes_list)
+        data = data.encode()
+        conn.send(data)
+
 
         #3.1.2. wait for confirmation of connection...
         try:

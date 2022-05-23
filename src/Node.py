@@ -1,8 +1,11 @@
+from asyncio.windows_events import NULL
+from copyreg import pickle
 import socket
 import select
 import sys
 from _thread import *
 import threading 
+import os
 
 class Node:
 
@@ -17,13 +20,47 @@ class Node:
         self.connections = []
         
         #. nodes_list = connect to the DS (main_node)...
-        #if nodes_list not empty:
-            #. best_connection = get_node_with_minimum_ping(nodes_list)...
-            #. if best_connection == null: exit(1)
-            #. try{ self.first_connection_sockets.connect(best_connection)} except{exit(1)}
-            #. connections_list.add(first_connection_socket)...
-        #. send connection confirmation to main_node...
+        main_node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        main_node_socket.connect(main_node_address)
 
+        # receiving list from a main_node as string and converting to list
+        data = main_node_socket.recv(4096)
+        data = data.decode('utf-8')
+        main_nodes_list = eval(data)
+
+        #if nodes_list not empty:
+        if len(main_nodes_list) > 0:
+            
+            #. best_connection = get_node_with_minimum_ping(nodes_list)...
+            best_connection = self.get_node_with_minimum_ping(main_nodes_list)
+            
+            #. if best_connection == null: exit(1)
+            if best_connection == NULL:
+                exit(1)
+
+            #. try{ self.first_connection_sockets.connect(best_connection)} except{exit(1)}
+            try:
+                self.first_connection_socket.connect(best_connection)
+                #. connections_list.add(first_connection_socket)...
+                self.connections(best_connection)
+            except:
+                print("Failed to connect on the best connection")
+                exit(1)
+        
+        #. send connection confirmation to main_node...
+        main_node_socket.send('Connected!'.encode())
+
+    def get_node_with_minimum_ping(main_nodes_list):
+        addr_with_lower_latency = NULL
+        for addr_node in main_nodes_list:
+            response = os.system("ping -c 1 " + addr_node)
+            if lower_latency == NULL:
+                lower_latency = response
+            else:
+                if response < lower_latency:
+                    lower_latency = response
+
+        return addr_with_lower_latency
 
     # (main thread): sending message to connections...
     def start(self):
