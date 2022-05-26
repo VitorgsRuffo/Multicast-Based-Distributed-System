@@ -2,6 +2,7 @@ import sys
 import socket
 from _thread import *
 import threading
+from GraphVisualization import GraphVisualization
 
 class MainNode:
     # 2. instantiate socket and nodes list...
@@ -12,9 +13,12 @@ class MainNode:
         self.socket.listen()
         self.nodes_list = []
         self.lock = threading.Lock()
+        #this is the global distribuited system abstract representation for future failure handling...
+        self.distributed_system = {}
 
-    #3.1. open new thread for processing request...
-    def __node_thread(self, conn, addr):
+
+    # function for processing new node request...
+    def __node_connection(self, conn, addr):
         
         #3.1.1 return nodes list...
         # Sending list as a string
@@ -23,26 +27,56 @@ class MainNode:
         conn.send(data)
 
 
-        #3.1.2. wait for confirmation of connection...
-        
-        # True: add new node to nodes list using a Lock...
-        original_port = conn.recv(2048)
-        original_port = int(original_port.decode())
-        original_addr = (addr[0], original_port)
+        # wait for confirmation of connection (i.e., the two control messages below: msg1 and msg2)...
+        # msg1: original port.
+        # adding new node to 
+        original_port = conn.recv(1024)
+        original_port = original_port.decode()        
+        original_port = int(original_port)
 
-        if(original_port < 0):  
-            print("Node " + original_addr + " failed to connect to the system.")
+        new_node_original_addr = (addr[0], original_port)
+        if original_port < 0 :  
+            print("Node " + new_node_original_addr + " failed to connect to the system.")
         else:
             self.lock.acquire()
-            self.nodes_list.append(original_addr)
+            self.nodes_list.append(new_node_original_addr)
             self.lock.release()
-
+        
+        
+        # msg2: the other node this node has connected with.
+        # maintaining the distributed system topology in main node for future failure handling...
+        new_node_connection = conn.recv(1024)
+        new_node_connection = new_node_connection.decode()
+        new_node_original_addr_string = f"{new_node_original_addr[0]}:{new_node_original_addr[1]}"
+        print(new_node_connection)
+        if new_node_connection == "0:0":
+            self.distributed_system[new_node_original_addr_string] = []
+        else:
+            self.distributed_system[new_node_connection].append(new_node_original_addr_string)
+            self.distributed_system[new_node_original_addr_string] = []
+            self.distributed_system[new_node_original_addr_string].append(new_node_connection)
+            start_new_thread(self.__distributed_system_visualization, (self.distributed_system,))
+        
         # close connection...
         conn.close()
 
+    def __distributed_system_visualization(self, distributed_system):
+        G = GraphVisualization(distributed_system)
+        G.visualize()
 
     #3. wait for new node...
     def execute(self):
         while True:
             conn, addr = self.socket.accept()
-            start_new_thread(self.__node_thread,(conn, addr))
+            flag = conn.recv(1024)
+            flag = flag.decode()
+            if flag == 'c':
+                start_new_thread(self.__node_connection, (conn, addr))
+
+            elif flag == 'f':
+                start_new_thread(self.__handle_node_failure, (conn, addr))
+
+            else:
+                conn.close()
+
+

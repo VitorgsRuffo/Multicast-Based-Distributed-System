@@ -7,6 +7,7 @@ import threading
 import os
 import re
 import subprocess
+from time import sleep
 
 class Node:
     def __init__(self, main_node_address, self_address):
@@ -23,11 +24,14 @@ class Node:
         #. nodes_list = connect to the DS (main_node)...
         main_node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         main_node_socket.connect(main_node_address)
+        main_node_socket.send("c".encode())
 
         # receiving list from a main_node as string and converting to list
         data = main_node_socket.recv(4096)
         data = data.decode('utf-8')
         main_nodes_list = eval(data)
+
+        connection_addr = "0:0"
 
         #if nodes_list not empty:
         if len(main_nodes_list) > 0:
@@ -42,10 +46,10 @@ class Node:
 
             #. try{ self.first_connection_sockets.connect(best_connection)} except{exit(1)}
             try:
-                print(best_connection)
                 self.first_connection_socket.connect(best_connection)
                 #. connections_list.add(first_connection_socket)...
                 self.connections.append(self.first_connection_socket)
+                connection_addr = f"{best_connection[0]}:{best_connection[1]}"
             except:
                 main_node_socket.send('-1'.encode())
                 print("Failed to connect.")
@@ -53,7 +57,10 @@ class Node:
         
         #. send connection confirmation to main_node...
         main_node_socket.send(f'{self_address[1]}'.encode())
+        sleep(1)
+        main_node_socket.send(connection_addr.encode())
         main_node_socket.close()
+        
 
     def get_node_with_minimum_ping(self, main_nodes_list):
         addr_with_lowest_latency = None
@@ -73,7 +80,8 @@ class Node:
                 if latency < lowest_latency:
                     lowest_latency = latency
                     addr_with_lowest_latency = addr_node
-
+        print("Best Connection: "+ str(addr_with_lowest_latency))
+        
         return addr_with_lowest_latency
 
     # (main thread): sending message to connections...

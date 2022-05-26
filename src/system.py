@@ -1,3 +1,9 @@
+#Main node doesn't not take part in the distributed system message forwarding system. 
+# It is used as a control node for performing tasks like adding a new node the the system and
+# handling node failure.
+
+# Nodes compose the distributed system message forwarding system. 
+
 import sys
 from MainNode import MainNode
 from Node import Node
