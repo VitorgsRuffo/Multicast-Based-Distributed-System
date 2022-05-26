@@ -7,6 +7,7 @@ import threading
 import os
 import re
 import subprocess
+from time import sleep
 
 class Node:
     def __init__(self, main_node_address, self_address):
@@ -56,6 +57,7 @@ class Node:
         
         #. send connection confirmation to main_node...
         main_node_socket.send(f'{self_address[1]}'.encode())
+        sleep(1)
         main_node_socket.send(connection_addr.encode())
         main_node_socket.close()
         
@@ -78,7 +80,8 @@ class Node:
                 if latency < lowest_latency:
                     lowest_latency = latency
                     addr_with_lowest_latency = addr_node
-
+        print("Best Connection: "+ str(addr_with_lowest_latency))
+        
         return addr_with_lowest_latency
 
     # (main thread): sending message to connections...

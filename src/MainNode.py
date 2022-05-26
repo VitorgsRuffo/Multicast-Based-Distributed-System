@@ -2,6 +2,7 @@ import sys
 import socket
 from _thread import *
 import threading
+from GraphVisualization import GraphVisualization
 
 class MainNode:
     # 2. instantiate socket and nodes list...
@@ -30,7 +31,9 @@ class MainNode:
         # msg1: original port.
         # adding new node to 
         original_port = conn.recv(1024)
-        original_port = int(original_port.decode())
+        original_port = original_port.decode()        
+        original_port = int(original_port)
+
         new_node_original_addr = (addr[0], original_port)
         if original_port < 0 :  
             print("Node " + new_node_original_addr + " failed to connect to the system.")
@@ -45,17 +48,21 @@ class MainNode:
         new_node_connection = conn.recv(1024)
         new_node_connection = new_node_connection.decode()
         new_node_original_addr_string = f"{new_node_original_addr[0]}:{new_node_original_addr[1]}"
+        print(new_node_connection)
         if new_node_connection == "0:0":
             self.distributed_system[new_node_original_addr_string] = []
         else:
             self.distributed_system[new_node_connection].append(new_node_original_addr_string)
             self.distributed_system[new_node_original_addr_string] = []
             self.distributed_system[new_node_original_addr_string].append(new_node_connection)
-
-
+            start_new_thread(self.__distributed_system_visualization, (self.distributed_system,))
+        
         # close connection...
         conn.close()
 
+    def __distributed_system_visualization(self, distributed_system):
+        G = GraphVisualization(distributed_system)
+        G.visualize()
 
     #3. wait for new node...
     def execute(self):
