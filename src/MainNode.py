@@ -15,17 +15,19 @@ class MainNode:
         self.lock = threading.Lock()
         #this is the global distribuited system abstract representation for future failure handling...
         self.distributed_system = {}
-
-
-    # function for processing new node request...
-    def __node_connection(self, conn, addr):
-        
-        #3.1.1 return nodes list...
-        # Sending list as a string
+        self.buffer = []
+    
+    def __send_nodes_list(self, conn):
+        # Sending nodes list as a string
         data = str(self.nodes_list)
         data = data.encode('utf-8')
         conn.send(data)
 
+    # function for processing new node request...
+    def __node_connection(self, conn, addr):
+        
+        # sending nodes_list to new node connection
+        self.__send_nodes_list(conn)
 
         # wait for confirmation of connection (i.e., the two control messages below: msg1 and msg2)...
         # msg1: original port.
@@ -57,8 +59,24 @@ class MainNode:
             self.distributed_system[new_node_original_addr_string].append(new_node_connection)
             start_new_thread(self.__distributed_system_visualization, (self.distributed_system,))
         
+        # Waiting for request from other nodes to access shared buffer (To produce or consume)
+        while True:
+            request = conn.recv(1024).decode()
+            request = eval(request)
+
+            if request['type'] == 'consume':
+                conn.send(self.buffer.pop().encode())
+
+            elif request['type'] == 'produce':
+                data_produced = request['data']
+                self.buffer.append(data_produced)
+                conn.send('OK'.encode())
+
+            elif request['type'] == 'list':
+                self.__send_nodes_list(conn)
+
         # close connection...
-        conn.close()
+        #conn.close()
 
     def __distributed_system_visualization(self, distributed_system):
         G = GraphVisualization(distributed_system)
@@ -68,15 +86,4 @@ class MainNode:
     def execute(self):
         while True:
             conn, addr = self.socket.accept()
-            flag = conn.recv(1024)
-            flag = flag.decode()
-            if flag == 'c':
-                start_new_thread(self.__node_connection, (conn, addr))
-
-            elif flag == 'f':
-                start_new_thread(self.__handle_node_failure, (conn, addr))
-
-            else:
-                conn.close()
-
-
+            start_new_thread(self.__node_connection, (conn, addr))
