@@ -1,4 +1,3 @@
-from copyreg import pickle
 import socket
 import select
 import sys
