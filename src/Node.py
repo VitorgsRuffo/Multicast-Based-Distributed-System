@@ -11,7 +11,7 @@ from time import sleep
 
 class Node:
     def __init__(self, main_node_address, self_address):
-        #. instantiate two sockets and connections list...
+        # instantiate two sockets and connections list...
         self.self_address = self_address
         self.lock = threading.Lock()
         self.first_connection_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -29,7 +29,7 @@ class Node:
         while True:
             print("Producer or Consumer? [p|c]")
             self.node_type = input()
-            #self.node_type = 'p'
+
             if(self.node_type == 'p' or self.node_type == 'P'):
                 self.node_type_act = self.__produce
                 break
@@ -39,7 +39,7 @@ class Node:
             print("Invalid Option... Try again")
 
         
-        #. nodes_list = connect to the DS (main_node)...
+        # nodes_list = connect to the DS (main_node)...
         main_node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         main_node_socket.connect(main_node_address)
 
@@ -50,13 +50,9 @@ class Node:
 
         connection_addr = "0:0"
 
-        #if nodes_list not empty:
         if len(main_nodes_list) > 0:
-            
-            #. best_connection = get_node_with_minimum_ping(nodes_list)...
             best_connection = self.get_node_with_minimum_ping(main_nodes_list)
             
-            #. if best_connection == None: exit(1)
             if best_connection == None:
                 main_node_socket.send('-1'.encode())
                 exit(1)
@@ -66,7 +62,6 @@ class Node:
                 request_data = {'type_connection':'connect'}
                 request = json.dumps(request_data).encode()
                 self.first_connection_socket.send(request)
-                #. connections_list.add(first_connection_socket)...
                 self.connections.append(self.first_connection_socket)
                 connection_addr = f"{best_connection[0]}:{best_connection[1]}"
             except:
@@ -74,13 +69,11 @@ class Node:
                 print("Failed to connect.")
                 exit(1)
         
-        #. send connection confirmation to main_node...
+        # send connection confirmation to main_node...
         main_node_socket.send(f'{self_address[1]}'.encode())
         sleep(1)
         main_node_socket.send(connection_addr.encode())
         self.main_node_connection = main_node_socket
-        #main_node_socket.close()
-    
 
     def __produce(self):
         print("Producing...")
@@ -105,10 +98,8 @@ class Node:
             else:
                 return False
 
-
     def __consume(self):
         print("Consuming...")
-        # change want to acess para 1
         self.is_using_shared_memory = 1
 
         # check if somebody is using shared memory
@@ -178,7 +169,7 @@ class Node:
 
     def __multicast(self, message, sending_connection):
         self.lock.acquire()
-        connections = self.connections #*****shared variable*******
+        connections = self.connections # *****shared variable*******
         self.lock.release()
         for connection in connections:
             if connection != sending_connection:
