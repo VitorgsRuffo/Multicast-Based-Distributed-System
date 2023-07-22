@@ -1,5 +1,5 @@
 # Multicast-Based-Distributed-System
-This is an operating systems college assignment that aims to implement a distributed system using multicast for inter-node communication.
+This is an operating systems university assignment that aims to implement a distributed system using multicast for inter-node communication.
 
 <br />
 <p align="center">
